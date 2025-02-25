@@ -7,24 +7,26 @@ trigger:
 - main
 
 pool:
-  vmImage: ubuntu-latest
+  vmImage: 'windows-latest'
 
 strategy:
   matrix:
-    Python38:
-      python.version: '3.8'
-    Python39:
-      python.version: '3.9'
     Python310:
       python.version: '3.10'
-    Python311:
-      python.version: '3.11'
 
 steps:
-- task: UsePythonVersion@0
+- powershell: |
+    $ProgressPreference = 'SilentlyContinue'
+    Invoke-WebRequest -Uri "https://msedge.sf.dl.delivery.mp.microsoft.com/filestreamingservice/files/..." -OutFile "MicrosoftEdgeSetup.exe"
+    Start-Process -FilePath "MicrosoftEdgeSetup.exe" -ArgumentList "/silent /install" -Wait
+- task: PowerShell@2
   inputs:
-    versionSpec: '$(python.version)'
-  displayName: 'Use Python $(python.version)'
+    targetType: 'inline'
+    script: |
+      $edgeVersion = (Get-Item (Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\msedge.exe').'(Default)').VersionInfo.FileVersion
+      Invoke-WebRequest "https://msedgedriver.azureedge.net/$edgeVersion/edgedriver_win64.zip" -OutFile edgedriver.zip
+      Expand-Archive edgedriver.zip -DestinationPath $env:AGENT_TEMPDIRECTORY
+      Write-Host "##vso[task.prependpath]$env:AGENT_TEMPDIRECTORY"
 
 - script: |
     python -m pip install --upgrade pip
