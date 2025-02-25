@@ -15,6 +15,11 @@ strategy:
       python.version: '3.10'
 
 steps:
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: '$(python.version)'
+  displayName: 'Use Python $(python.version)'
+
 - powershell: |
     $ProgressPreference = 'SilentlyContinue'
     Invoke-WebRequest -Uri "https://msedge.sf.dl.delivery.mp.microsoft.com/filestreamingservice/files/..." -OutFile "MicrosoftEdgeSetup.exe"
